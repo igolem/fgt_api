@@ -413,3 +413,17 @@ def valid_fgt_cn(addr_country):
     except:
         return (False)
     return (valid_cn)        
+
+
+# receive fgt color value, change all invalid colors to 0
+# created: 2019-01-06
+# last modified: 2019-01-06
+def color_std(color_index):
+    try:
+        color_index = int(color_index)
+        if (color_index < 0 or color_index > 32):
+            color_index = 0                                
+    except:
+        color_index = 0
+
+    return color_index

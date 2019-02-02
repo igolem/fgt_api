@@ -184,7 +184,6 @@ class fgt_api_token:
             return
 
     # set token in URL and remove from HTTP header
-    # "url_token_state" data type is boolean
     def url_token(self):
         try:
             self.url_params['access_token'] = self.token

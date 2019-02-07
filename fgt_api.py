@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2018-02-01
+# last modified: 2018-02-06
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -175,7 +175,6 @@ class fgt_api_token:
                     continue
             self.url_params['filter'] = filter_text
 
-
     # remove filter from HTTP parameters
     def unset_filter(self):
         try:
@@ -273,9 +272,9 @@ class fgt_api_token:
     #####
 
     #####
-    # cmdb branch of API calls
+    # address object cmdb functions
     #####
-
+    
     # retrieve all defined address objects
     def show_addresses(self):
         api_url = self.cmdb_addr
@@ -291,7 +290,7 @@ class fgt_api_token:
 
     # add an address to a FortiGate
     # address object must be a valid dict
-    def add_addr(self, addr_object):
+    def add_address(self, addr_object):
         if type(addr_object) is dict:
             # set URL for adding an address object
             api_url = self.cmdb_addr
@@ -299,13 +298,28 @@ class fgt_api_token:
             response = self.api_post(api_url, addr_object)
             return response
 
+    # delete an address object on a FortiGate
+    def del_address(self, addr_name):
+        if type(addr_name) is str:
+            api_url = self.cmdb_addr + addr_name
+            response = self.api_delete(api_url)
+            return response
+        else:
+            return None
+    
+
+    #####
+    # policy cmdb functions
+    #####
+    
+    # show all policies
     def show_policies(self):
         api_url = self.cmdb_policy
         response = self.api_get(api_url)
         return response
 
-    # get policy
-    def get_address(self, policy_index):
+    # get an individual policy
+    def get_policy(self, policy_index):
         if type(policy_index) is int:
             policy_index = str(policy_index)
             api_url = self.cmdb_policy + policy_index
@@ -321,17 +335,20 @@ class fgt_api_token:
             return response
 
     # query FortiGate policy based on filter criteria provided
+    # filter must be a dict with in the format {SEARCHTEXT: OPERATOR};
+    #   None can be used in place of operator for first search term
     def search_policy(self, policy_filter):
         if type(policy_filter) is dict:
             api_url = self.cmdb_policy
             # add filters to URL parameters
             self.set_filter(policy_filter)
             response = self.api_get(api_url)
-            # remove additional parameters
+            # remove filter parameter
             del self.url_params['filter']
             return response
         
     # move a policy on a FortiGate
+    # index is "mkey"; ref_index is the index of the policy to move around
     def move_policy(self, index, ref_index, move_type):
         if (type(index) is int and type(ref_index) is int and 
             move_type in ['before', 'after']):
@@ -353,15 +370,6 @@ class fgt_api_token:
         api_url = self.cmdb_policy + index
         response = self.api_delete(api_url)
         return response
-
-    # delete an address object on a FortiGate
-    def del_addr(self, addr_name):
-        if type(addr_name) is str:
-            api_url = self.cmdb_addr + addr_name
-            response = self.api_delete(api_url)
-            return response
-        else:
-            return None
 
     #####
     # monitor branch of API calls

@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2018-02-06
+# last modified: 2018-02-10
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -150,10 +150,20 @@ class fgt_api_token:
 
     # arbitrarily set HTTP headers (be careful, with great power...)
     # "custom_headers" data type is dict; 
-    def set_params(self, custom_headers):
+    def set_headers(self, custom_headers):
         if type(custom_headers) is dict:
             for header_name in custom_headers.keys():
                 self.http_headers[header_name] = custom_headers[header_name]
+
+    # arbitrarily delete HTTP headers (be careful, with great power...)
+    # "del_headers" data type is a list; 
+    def del_headers(self, del_headers):
+        if type(del_headers) is list:
+            for header_name in del_headers.keys():
+                try:
+                    del self.http_headers[header_name]
+                except:
+                    continue
 
     # set API filter values in HTTP parameters
     # "filter" data type is dict in format {FILTER:OPERATOR}

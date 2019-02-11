@@ -394,7 +394,7 @@ class fgt_api_token:
 
 # validate fortigate country value
 # created: 2019-01-07
-# last modified: 2019-01-07
+# last modified: 2019-02-10
 def valid_fgt_cn(addr_country):
     valid_cn = False
     

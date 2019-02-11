@@ -423,14 +423,12 @@ def valid_fgt_cn(addr_country):
                      'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG',
                      'VI', 'VN', 'VU', 'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW']
     
-    try:
-        for cn in valid_cn_list:
-            if addr_country == cn:
-                valid_cn = True
-                break
-    except:
-        return (False)
-    return (valid_cn)        
+    if addr_country in valid_cn_list:
+        valid_cn = True
+    else:
+        valid_cn = False
+
+    return valid_cn        
 
 
 # receive fgt color value, change all invalid colors to 0

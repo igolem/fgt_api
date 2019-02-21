@@ -77,9 +77,9 @@ class fgt_api_token:
    # set global
    # API responses include information for all vdoms where user has appropriate rights
     def set_global(self):
-        set.url_params['global'] = 1
+        self.url_params['global'] = 1
         try:
-            del url_params['vdom']
+            del self.url_params['vdom']
         except:
             return
 

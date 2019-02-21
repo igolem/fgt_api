@@ -141,7 +141,7 @@ class fgt_api_token:
     # arbitrarily delete HTTP URL parameters (be careful, with great power...)
     # "del_params" data type is a list; 
     def del_params(self, del_params):
-        if type(custom_params) is list:
+        if type(del_params) is list:
             for param_name in del_params:
                 try:
                     del self.url_params[param_name]

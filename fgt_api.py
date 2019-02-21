@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2018-02-10
+# last modified: 2018-02-20
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -100,7 +100,7 @@ class fgt_api_token:
     # set certificate verification
     # "cert_verify" data type is boolean
     def set_sslverify(self, cert_verify):
-        if type(cert_verify) is boolean:
+        if type(cert_verify) is bool:
             self.cert_verify = cert_verify
 
     # set HTTP response timeout

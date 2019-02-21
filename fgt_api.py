@@ -70,7 +70,7 @@ class fgt_api_token:
             self.vdom = vdom
             self.url_params['vdom'] = self.vdom
             try:
-                del url_params['global']
+                del self.url_params['global']
             except:
                 return
 

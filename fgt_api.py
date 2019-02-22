@@ -159,7 +159,7 @@ class fgt_api_token:
     # "del_headers" data type is a list; 
     def del_headers(self, del_headers):
         if type(del_headers) is list:
-            for header_name in del_headers.keys():
+            for header_name in del_headers:
                 try:
                     del self.http_headers[header_name]
                 except:

@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-02-20
+# last modified: 2019-02-21
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -175,11 +175,11 @@ class fgt_api_token:
                 try:
                     if filters[filter] in ['or','and'] and lc > 0:
                         if filters[filter] == 'or':
-                            filter_text = filter_text + ',filter=' + filter
+                            filter_text = filter_text + ',filter=' + str(filter)
                         else:
-                            filter_text = filter_text + '&filter=' + filter
+                            filter_text = filter_text + '&filter=' + str(filter)
                     elif lc == 0:
-                        filter_text = filter 
+                        filter_text = 'filter=' + str(filter) 
                     lc += 1
                 except:
                     continue

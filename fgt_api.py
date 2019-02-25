@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-02-21
+# last modified: 2019-02-24
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -23,7 +23,6 @@
 #   and I will create some in this module for validating API specific elements
 #   but the work of validation is outside the scope of this module
 # the fgt_api_token class object has no problem making an invalid query for you :-)
-# i am not designing for http use... only https... sorry.
 
 
 # python version: 3.7.2
@@ -52,24 +51,44 @@ class fgt_api_token:
         # set token in HTTP header, so URL can be displayed without showing token
         self.http_headers = {'Authorization': 'Bearer ' + self.token}        
 
-        # set URL bases for CMDB and monitor queries
-        self.cmdb_base = 'https://' + self.host + ':' + self.port + '/api/v2/cmdb/'
-        self.monitor_base = 'https://' + self.host + ':' + self.port + '/api/v2/monitor/'
-        self.set_paths(self.cmdb_base, self.monitor_base)
+        # set API URL paths
+        self.set_paths()
 
-    def set_paths(self, cmdb_base, monitor_base):
-        self.cmdb_addr = cmdb_base + 'firewall/address/'
-        self.cmdb_policy = cmdb_base + 'firewall/policy/'
-        self.monitor_policy = monitor_base + 'firewall/policy/'
+    def set_paths(self):
+        self.cmdb_base = \
+            self.protocol + '://' + self.host + ':' + self.port + '/api/v2/cmdb/'
+        self.monitor_base = \
+            self.protocol + '://' + self.host + ':' + self.port + '/api/v2/monitor/'
+        self.cmdb_addr = self.cmdb_base + 'firewall/address/'
+        self.cmdb_policy = self.cmdb_base + 'firewall/policy/'
+        self.monitor_policy = self.monitor_base + 'firewall/policy/'
 
-   # set vdom
-   # "vdom" data type is string; multiple VDOMs separated by commas with no spaces
-   # change this to list?
+    # set protocol between http and https
+    def set_protocol(self, protocol):
+        if type(protocol) is str:
+            if protocol == 'http':
+                try:
+                    self.protocol = protocol
+                    self.port = '80'
+                    self.set_paths()
+                except:
+                    return
+            elif protocol == 'https':
+                try:
+                    self.protocol = protocol
+                    self.port = '443'
+                    self.set_paths()
+                except:
+                    return
+
+    # set vdom
+    # "vdom" data type is string; multiple VDOMs separated by commas with no spaces
+    # change this to list?
     def set_vdom(self, vdom):
         if type(vdom) is str:
-            self.vdom = vdom
-            self.url_params['vdom'] = self.vdom
             try:
+                self.vdom = vdom
+                self.url_params['vdom'] = self.vdom
                 del self.url_params['global']
             except:
                 return
@@ -77,8 +96,8 @@ class fgt_api_token:
    # set global
    # API responses include information for all vdoms where user has appropriate rights
     def set_global(self):
-        self.url_params['global'] = 1
         try:
+            self.url_params['global'] = 1
             del self.url_params['vdom']
         except:
             return
@@ -89,11 +108,7 @@ class fgt_api_token:
         try:
             if int(port) > 0 and int(port) < 65536:
                 self.port = str(port)
-                self.cmdb_base = ('https://' + self.host + ':' + self.port +
-                                  '/api/v2/cmdb/')
-                self.monitor_base = ('https://' + self.host + ':' + self.port +
-                                     '/api/v2/monitor/')
-                self.set_paths(self.cmdb_base, self.monitor_base)
+                self.set_paths()
         except:
             return
 

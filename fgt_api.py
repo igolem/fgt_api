@@ -41,6 +41,7 @@ class fgt_api_token:
         self.host = host
         self.token = token
                 
+        self.protocol = 'https'
         self.port = '443'
         self.vdom = 'root'
         self.cert_verify = False

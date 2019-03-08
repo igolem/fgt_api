@@ -253,26 +253,29 @@ class fgt_api_token:
             return None
 
     # send HTTP post request to FGT API
+    # json_data should be type dict
     def api_post(self, api_url, json_data):
         try:
             self.set_url_warn(self.cert_verify)
             response = requests.post(api_url,
                                      params = self.url_params,
                                      headers = self.http_headers,
-                                     verify = self.cert_verify,
                                      json = json_data,
+                                     verify = self.cert_verify,
                                      timeout = self.timeout)
             return response
         except:
             return None
 
     # send HTTP put to FGT API
-    def api_put(self, api_url):
+    # json_data should be type None if no json data is required or a dict
+    def api_put(self, api_url, json_data):
         try:
             self.set_url_warn(self.cert_verify)
             response = requests.put(api_url,
                                     params = self.url_params,
                                     headers = self.http_headers,
+                                    json = json_data,
                                     verify = self.cert_verify,
                                     timeout = self.timeout)
             return response

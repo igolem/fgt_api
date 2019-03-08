@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-02-24
+# last modified: 2019-03-07
 
 # purpose:
 # FortiGate API module for use with token-based authentication

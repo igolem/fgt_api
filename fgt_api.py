@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-03-09
+# last modified: 2019-03-10
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -242,23 +242,17 @@ class fgt_api_token:
                         format = format + property
                     else:
                         format = format + property + '|'
-            url_params['format'] = format
+                self.url_params['format'] = format
         except:
             pass
     
+    # unset format in URL parameters
     def unset_format(self):
         try:
             del self.url_params['format']
         except:
             pass
     
-    # unset format in URL parameters
-    def unset_metadata(self):
-        try:
-            del self.url_params['with_meta']
-        except:
-            return
-
     # arbitrarily set HTTP URL parameters (be careful, with great power...)
     # "custom_params" data type is dict; 
     def set_params(self, custom_params):

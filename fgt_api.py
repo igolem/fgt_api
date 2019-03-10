@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-03-07
+# last modified: 2019-03-09
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -44,6 +44,8 @@ class fgt_api_token:
         self.protocol = 'https'
         self.port = '443'
         self.vdom = 'root'
+        # note: self.cert_verify should be True in production, this requires cert mgmt
+        #       for ease us use, default is False
         self.cert_verify = False
         self.timeout = 3
 
@@ -54,6 +56,18 @@ class fgt_api_token:
 
         # set API URL paths
         self.set_paths()
+        
+        # set post query actions
+        # if clear_filter_default is True, filters will be removed after a query
+        #   if clear_filter_default is False, defined filters will be persistent
+        self.clear_filter_default = True
+        self.clear_format_default = True
+        self.clear_params_default = False
+        # list of URL parameters to skip when clearing parameters
+        self.skip_params = ['vdom','global','access_token']
+        self.clear_headers_default = False
+        # list of HTTP heaers to skip when clearing headers
+        self.skip_headers = ['Authorization']
 
     def set_paths(self):
         self.cmdb_base = \
@@ -65,6 +79,9 @@ class fgt_api_token:
         self.monitor_policy = self.monitor_base + 'firewall/policy/'
 
     # set protocol between http and https
+    # note: you should only use HTTPS when hitting against the API in production
+    #       the only reason to use http is for troubleshooting purposes
+    #       changing protocol also sets default port for the chosen protocol
     def set_protocol(self, protocol):
         if type(protocol) is str:
             if protocol == 'http':
@@ -72,141 +89,280 @@ class fgt_api_token:
                     self.protocol = protocol
                     self.port = '80'
                     self.set_paths()
+                    print('\nUnencrypted HTTP should only be used for troubleshooting.' +
+                          '\nAccess token can be observed in clear text.\n')
                 except:
-                    return
+                    pass
             elif protocol == 'https':
                 try:
                     self.protocol = protocol
                     self.port = '443'
                     self.set_paths()
                 except:
-                    return
+                    pass
 
     # set vdom
     # "vdom" data type is string; multiple VDOMs separated by commas with no spaces
-    # change this to list?
+    # can also specify multiple VDOMs as a list
     def set_vdom(self, vdom):
         if type(vdom) is str:
             try:
                 self.vdom = vdom
                 self.url_params['vdom'] = self.vdom
-                del self.url_params['global']
+                if self.url_params['global']:
+                    del self.url_params['global']
             except:
-                return
+                pass
+        if type(vdom) is list:
+            try:
+                vdom_list = ''
+                num_vdoms = len(vdom)
+                lc = 1
+                for vdom_name in vdom:
+                    if lc < num_vdoms:
+                        vdom_list = vdom_list + vdom_name + ','
+                    else:
+                        vdom_list = vdom_list + vdom_name
+                    lc += 1
+                self.vdom = vdom_list
+                self.url_params['vdom'] = self.vdom
+                if self.url_params['global']:
+                    del self.url_params['global']
+            except:
+                pass                    
+
 
    # set global
    # API responses include information for all vdoms where user has appropriate rights
     def set_global(self):
         try:
             self.url_params['global'] = 1
-            del self.url_params['vdom']
+            if self.url_params['vdom']:
+                del self.url_params['vdom']
         except:
-            return
+            pass
 
     # set port
     # "port" data type is integer
+    # if you change http/https protocol, customer port change must be after that call
     def set_port(self, port):
         try:
             if int(port) > 0 and int(port) < 65536:
                 self.port = str(port)
                 self.set_paths()
         except:
-            return
+            pass
 
     # set certificate verification
     # "cert_verify" data type is boolean
     def set_sslverify(self, cert_verify):
-        if type(cert_verify) is bool:
-            self.cert_verify = cert_verify
+        try:
+            if type(cert_verify) is bool:
+                self.cert_verify = cert_verify
+        except:
+            pass
 
     # set HTTP response timeout
     # "timeout" data type is integer
     def set_timeout(self, timeout):
-        if type(timeout) is int:
-            self.timeout = timeout
+        try:
+            if type(timeout) is int:
+                self.timeout = timeout
+        except:
+            pass
     
     # set with_meta in URL parameters to include meta data in in API response
     def set_metadata(self):
-        self.url_params['with_meta'] = 1
+        try:
+            self.url_params['with_meta'] = 1
+        except:
+            pass
     
     # unset with_metadata
     def unset_metadata(self):
         try:
             del self.url_params['with_meta']
         except:
-            return
+            pass
 
-    # set skip in URL parameters to exclude skipped properties in API response
+    # set start in URL parameters
+    def set_start(self, key):
+        try:
+            if type(key) is int:
+                self.url_params['start'] = key
+        except:
+            pass
+    
+    # unset start
+    def unset_start(self):
+        try:
+            del self.url_params['start']
+        except:
+            pass
+
+    # set count in URL parameters
+    def set_count(self, count):
+        try:
+            if type(count) is int:
+                self.url_params['count'] = count
+        except:
+            pass
+    
+    # unset count
+    def unset_count(self):
+        try:
+            del self.url_params['count']
+        except:
+            pass
+
+    # set skip in URL parameters to show only relevant attributes in API response
     def set_skip(self):
-        self.url_params['skip'] = 1
+        try:
+            self.url_params['skip'] = 1
+        except:
+            pass
     
     # unset skip for URL parameters
     def unset_skip(self):
         try:
             del self.url_params['skip']
         except:
+            pass
+
+    # set format in URL parameters
+    def set_format(self, property_list):
+        try:
+            if type(property_list) is list:
+                lc = 0
+                format = ''
+                for property in property_list:
+                    property = str(property)
+                    lc += 1
+                    if lc == len(property_list):
+                        format = format + property
+                    else:
+                        format = format + property + '|'
+            url_params['format'] = format
+        except:
+            pass
+    
+    def unset_format(self):
+        try:
+            del self.url_params['format']
+        except:
+            pass
+    
+    # unset format in URL parameters
+    def unset_metadata(self):
+        try:
+            del self.url_params['with_meta']
+        except:
             return
 
     # arbitrarily set HTTP URL parameters (be careful, with great power...)
     # "custom_params" data type is dict; 
     def set_params(self, custom_params):
-        if type(custom_params) is dict:
-            for param_name in custom_params.keys():
-                self.url_params[param_name] = custom_params[param_name]
+        try:
+            if type(custom_params) is dict:
+                for param_name in custom_params.keys():
+                    self.url_params[param_name] = custom_params[param_name]
+        except:
+            pass
 
     # arbitrarily delete HTTP URL parameters (be careful, with great power...)
     # "del_params" data type is a list; 
     def del_params(self, del_params):
-        if type(del_params) is list:
-            for param_name in del_params:
-                try:
-                    del self.url_params[param_name]
-                except:
-                    continue
+        try:
+            if type(del_params) is list:
+                for param_name in del_params:
+                    try:
+                        if self.url_params[param_name]:
+                            del self.url_params[param_name]
+                    except:
+                        continue
+        except:
+            pass
 
     # arbitrarily set HTTP headers (be careful, with great power...)
     # "custom_headers" data type is dict; 
     def set_headers(self, custom_headers):
-        if type(custom_headers) is dict:
-            for header_name in custom_headers.keys():
-                self.http_headers[header_name] = custom_headers[header_name]
+        try:
+            if type(custom_headers) is dict:
+                for header_name in custom_headers.keys():
+                    self.http_headers[header_name] = custom_headers[header_name]
+        except:
+            pass
 
     # arbitrarily delete HTTP headers (be careful, with great power...)
     # "del_headers" data type is a list; 
     def del_headers(self, del_headers):
-        if type(del_headers) is list:
-            for header_name in del_headers:
-                try:
-                    del self.http_headers[header_name]
-                except:
-                    continue
+        try:
+            if type(del_headers) is list:
+                for header_name in del_headers:
+                    try:
+                        if self.http_headers[header_name]:
+                            del self.http_headers[header_name]
+                    except:
+                        continue
+        except:
+            pass
+
+    # set key and pattern in HTTP parameters
+    # setting this will remove any 'filter parameter'
+    def set_key_pattern(self, key, pattern):
+        try:
+            self.url_params['key'] = key
+            self.url_params['pattern'] = pattern
+            if 'filter' in url_params.keys():
+                del url_params['filter']
+        except:
+            pass
+
+    # unset key and pattern in HTTP parameters
+    def unset_key_pattern(self):
+        try:
+            del self.url_params['key']
+        except:
+            pass
+        try:
+            del self.url_params['pattern']
+        except:
+            pass
 
     # set API filter values in HTTP parameters
     # "filter" data type is dict in format {FILTER:OPERATOR}
     # valid operators are "and" and "or"
+    # setting a filter will unset the "key" and "pattern" URL parameters
     def set_filter(self, filters):
-        if type(filters) is dict and len(filters.keys()) > 0:
-            lc = 0
-            for filter in filters.keys():
-                try:
-                    if filters[filter] in ['or','and'] and lc > 0:
-                        if filters[filter] == 'or':
-                            filter_text = filter_text + ',filter=' + str(filter)
-                        else:
-                            filter_text = filter_text + '&filter=' + str(filter)
-                    elif lc == 0:
-                        filter_text = 'filter=' + str(filter) 
-                    lc += 1
-                except:
-                    continue
-            self.url_params['filter'] = filter_text
+        try:
+            if type(filters) is dict and len(filters.keys()) > 0:
+                lc = 0
+                for filter in filters.keys():
+                    try:
+                        if filters[filter] in ['or','and'] and lc > 0:
+                            if filters[filter] == 'or':
+                                filter_text = filter_text + ',filter=' + str(filter)
+                            else:
+                                filter_text = filter_text + '&filter=' + str(filter)
+                        elif lc == 0:
+                            filter_text = 'filter=' + str(filter) 
+                        lc += 1
+                    except:
+                        continue
+                self.url_params['filter'] = filter_text
+                if 'key' in url_params.keys():
+                    del url_params['key']
+                if 'pattern' in url_params.keys():
+                    del url_params['pattern']
+        except:
+            pass
 
     # remove filter from HTTP parameters
     def unset_filter(self):
         try:
             del self.url_params['filter']
         except:
-            return
+            pass
 
     # set token in URL and remove from HTTP header
     def url_token(self):
@@ -214,7 +370,7 @@ class fgt_api_token:
             self.url_params['access_token'] = self.token
             del self.http_headers['Authorization']
         except:
-            return
+            pass
                 
     # set token in HTTP header and remove token from URL
     # allows move back to header-based token auth after setting URL token auth
@@ -223,7 +379,27 @@ class fgt_api_token:
             self.http_headers['Authorization'] = 'Bearer ' + self.token
             del self.url_params['access_token']
         except:
-            return
+            pass
+
+    # clear url_params and headers per query based on settings
+    def clear_info(self):
+        try:
+            if self.clear_filter_default == True:
+                if 'filter' in self.url_params.keys():
+                    del self.url_params['filter']  
+            if self.clear_format_default == True:
+                if 'format' in self.url_params.keys():
+                    del self.url_params['format']  
+            if self.clear_params_default == True:
+                for param in self.url_params.keys():
+                    if param not in self.skip_params:
+                        del self.url_params[param]
+            if self.clear_headers_default == True:
+                for header in self.http_headers.keys():
+                    if header not in self.skip_headers:
+                        del self.http_headers[header]
+        except:
+            pass
 
     # disable TLS warnings if cert verify is off; else enable warnings
     # set per API request, since multiple FGTs in same script may have diff requirements
@@ -248,6 +424,7 @@ class fgt_api_token:
                                     headers = self.http_headers,
                                     verify = self.cert_verify,
                                     timeout = self.timeout)
+            self.clear_info()            
             return response
         except:
             return None
@@ -291,6 +468,7 @@ class fgt_api_token:
                                        headers = self.http_headers,
                                        verify = self.cert_verify,
                                        timeout = self.timeout)
+            self.clear_info()            
             return response
         except:
             return None
@@ -372,8 +550,6 @@ class fgt_api_token:
             # add filters to URL parameters
             self.set_filter(policy_filter)
             response = self.api_get(api_url)
-            # remove filter parameter
-            del self.url_params['filter']
             return response
         
     # move a policy on a FortiGate
@@ -381,24 +557,31 @@ class fgt_api_token:
     def move_policy(self, index, ref_index, move_type):
         if (type(index) is int and type(ref_index) is int and 
             move_type in ['before', 'after']):
-            index = str(index)
-            ref_index = str(ref_index)
-            api_url = self.cmdb_policy + index
-            # add move parameters to URL
-            self.url_params['action'] = 'move'
-            self.url_params[move_type] = ref_index
-            response = self.api_put(api_url)
-            # remove move parameters from URL
-            del self.url_params['action']
-            del self.url_params[move_type]
-            return response            
+            try:
+                index = str(index)
+                ref_index = str(ref_index)
+                api_url = self.cmdb_policy + index
+                # add move parameters to URL
+                self.url_params['action'] = 'move'
+                self.url_params[move_type] = ref_index
+                response = self.api_put(api_url)
+                # remove move parameters from URL
+                del self.url_params['action']
+                del self.url_params[move_type]
+                return response            
+            except:
+                pass
 
     # delete a policy on a FortiGate
     def del_policy(self, index):
-        index = str(index)
-        api_url = self.cmdb_policy + index
-        response = self.api_delete(api_url)
-        return response
+        try:
+            index = str(index)
+            api_url = self.cmdb_policy + index
+            response = self.api_delete(api_url)
+            return response
+        except:
+            pass
+
 
     #####
     # monitor branch of API calls

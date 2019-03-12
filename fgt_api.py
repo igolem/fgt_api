@@ -3,7 +3,7 @@
 # file: fgt_api.py
 # author: jason mueller
 # created: 2018-12-26
-# last modified: 2019-03-10
+# last modified: 2019-03-11
 
 # purpose:
 # FortiGate API module for use with token-based authentication
@@ -558,7 +558,7 @@ class fgt_api_token:
                 # add move parameters to URL
                 self.url_params['action'] = 'move'
                 self.url_params[move_type] = ref_index
-                response = self.api_put(api_url)
+                response = self.api_put(api_url, None)
                 # remove move parameters from URL
                 del self.url_params['action']
                 del self.url_params[move_type]
